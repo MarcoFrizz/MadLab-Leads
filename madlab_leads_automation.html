@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MadLab Leads — Automazione</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --surface2: #f2f1ee;
+    --border: rgba(0,0,0,0.1);
+    --border-md: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text-muted: #6b6b67;
+    --text-faint: #9e9e9a;
+    --green: #1D9E75; --green-bg: #EAF3DE; --green-text: #3B6D11;
+    --amber: #BA7517; --amber-bg: #FAEEDA; --amber-text: #854F0B;
+    --red: #993C1D; --red-bg: #FAECE7; --red-text: #993C1D;
+    --blue: #185FA5; --blue-bg: #E6F1FB; --blue-text: #185FA5;
+    --gray-bg: #F1EFE8; --gray-text: #5F5E5A;
+    --radius: 10px; --radius-sm: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141412; --surface: #1e1e1b; --surface2: #272724;
+      --border: rgba(255,255,255,0.1); --border-md: rgba(255,255,255,0.18);
+      --text: #f0efe8; --text-muted: #9e9e98; --text-faint: #6b6b67;
+      --green-bg: #17341a; --green-text: #7dd68a;
+      --amber-bg: #2e2008; --amber-text: #f5c060;
+      --red-bg: #2e1008; --red-text: #f08060;
+      --blue-bg: #0a1e36; --blue-text: #6db3f2;
+      --gray-bg: #242420; --gray-text: #9e9e98;
+    }
+  }
+
+  body {
+    font-family: 'DM Sans', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 1.5rem;
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 40px; height: 40px; background: var(--text); border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .logo-icon i { font-size: 20px; color: var(--bg); }
+  .header-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; font-size: 13px; font-weight: 500;
+    border-radius: var(--radius-sm); cursor: pointer;
+    border: 1px solid var(--border-md);
+    background: var(--surface); color: var(--text);
+    transition: all 0.15s; user-select: none;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .btn-primary { background: var(--blue-bg); border-color: var(--blue); color: var(--blue-text); }
+  .btn-primary:hover { opacity: 0.85; background: var(--blue-bg); }
+  .btn-success { background: var(--green-bg); border-color: var(--green); color: var(--green-text); }
+  .btn-success:hover { opacity: 0.85; background: var(--green-bg); }
+  .btn-danger { background: var(--red-bg); border-color: var(--red); color: var(--red-text); }
+
+  /* Summary */
+  .summary-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .metric {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+  }
+  .metric-val { font-size: 24px; font-weight: 600; }
+  .metric-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  /* Batch bar */
+  .batch-bar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    margin-bottom: 1.25rem; display: none;
+  }
+  .batch-bar.visible { display: block; }
+  .batch-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .batch-title { font-size: 13px; font-weight: 600; }
+  .batch-status { font-size: 12px; color: var(--text-muted); }
+  .progress-track {
+    height: 5px; background: var(--surface2); border-radius: 3px;
+    overflow: hidden; margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%; background: var(--green); border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .batch-queue { display: flex; flex-wrap: wrap; gap: 6px; }
+  .qi {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 1px solid var(--border); font-weight: 500;
+  }
+  .qi-pending { background: var(--gray-bg); color: var(--gray-text); }
+  .qi-running { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue); }
+  .qi-done { background: var(--green-bg); color: var(--green-text); border-color: var(--green); }
+  .qi-error { background: var(--red-bg); color: var(--red-text); border-color: var(--red); }
+  .qi-skip { background: var(--gray-bg); color: var(--text-faint); }
+
+  /* Cards */
+  .leads-grid { display: flex; flex-direction: column; gap: 10px; }
+  .lead-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .lead-card.active-batch { border-color: var(--blue); }
+  .lead-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 16px; cursor: pointer; user-select: none;
+  }
+  .lead-header:hover { background: var(--surface2); }
+  .lead-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; flex-shrink: 0;
+  }
+  .lead-info { flex: 1; min-width: 0; }
+  .lead-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lead-files { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badges { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .badge {
+    font-size: 11px; padding: 3px 9px; border-radius: 20px;
+    font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid transparent;
+  }
+  .b-done { background: var(--green-bg); color: var(--green-text); border-color: var(--green); }
+  .b-todo { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber); }
+  .b-missing { background: var(--red-bg); color: var(--red-text); border-color: var(--red); }
+  .b-na { background: var(--gray-bg); color: var(--gray-text); }
+  .b-running { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue); }
+
+  /* Card body */
+  .lead-body { border-top: 1px solid var(--border); padding: 14px 16px; display: none; }
+  .lead-body.open { display: block; }
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .step-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .step-content { flex: 1; min-width: 0; }
+  .step-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .check-row { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .ck-ok { color: var(--green-text); }
+  .ck-no { color: var(--red-text); }
+  .step-desc { font-size: 12px; color: var(--text-muted); margin: 6px 0; line-height: 1.5; }
+  .step-action { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+  /* Log */
+  .log-box {
+    margin-top: 10px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace;
+    max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; display: none;
+  }
+  .log-box.open { display: block; }
+
+  /* Empty */
+  .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text-faint); }
+  .empty-state i { font-size: 40px; display: block; margin-bottom: 10px; opacity: 0.35; }
+  .empty-state p { font-size: 14px; }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block; width: 13px; height: 13px;
+    border: 2px solid var(--border-md); border-top-color: var(--blue);
+    border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 8px 12px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--text-muted); margin-bottom: 1.25rem;
+    align-items: center;
+  }
+  .legend strong { color: var(--text); margin-right: 4px; }
+
+  @media (max-width: 600px) {
+    .summary-bar { grid-template-columns: repeat(2, 1fr); }
+    .badges { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-logo">
+      <div class="logo-icon"><i class="ti ti-folder-bolt"></i></div>
+      <div>
+        <div class="header-title">MadLab Leads — Automazione</div>
+        <div class="header-sub">Scansione cartella <code>Leads/</code> su SharePoint MadLab-PO</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="scan-btn" onclick="startScan()">
+        <i class="ti ti-refresh"></i> Scansiona
+      </button>
+      <button class="btn btn-success" id="batch-btn" onclick="runBatch()" style="display:none">
+        <i class="ti ti-player-play"></i> Esegui tutti i pendenti ↗
+      </button>
+      <button class="btn btn-danger" id="stop-btn" onclick="stopBatch()" style="display:none">
+        <i class="ti ti-player-stop"></i> Interrompi
+      </button>
+    </div>
+  </div>
+
+  <div class="summary-bar" id="summary-bar" style="display:none">
+    <div class="metric"><div class="metric-val" id="m-total">0</div><div class="metric-lbl">Cartelle lead</div></div>
+    <div class="metric"><div class="metric-val" id="m-l1ok" style="color:var(--green-text)">0</div><div class="metric-lbl">Lead 1 completati</div></div>
+    <div class="metric"><div class="metric-val" id="m-l2ok" style="color:var(--green-text)">0</div><div class="metric-lbl">Lead 2 completati</div></div>
+    <div class="metric"><div class="metric-val" id="m-todo" style="color:var(--amber-text)">0</div><div class="metric-lbl">Da elaborare</div></div>
+  </div>
+
+  <div class="batch-bar" id="batch-bar">
+    <div class="batch-header">
+      <span class="batch-title"><i class="ti ti-list-check"></i> Esecuzione batch in corso</span>
+      <span class="batch-status" id="batch-status">0 / 0</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="batch-queue" id="batch-queue"></div>
+  </div>
+
+  <div class="legend">
+    <strong>Legenda:</strong>
+    <span class="badge b-done">✓ completato</span>
+    <span class="badge b-todo">⏳ da fare</span>
+    <span class="badge b-missing">✗ manca input</span>
+    <span class="badge b-na">— n/d</span>
+  </div>
+
+  <div class="leads-grid" id="leads-grid">
+    <div class="empty-state">
+      <i class="ti ti-folder-search"></i>
+      <p>Premi <strong>Scansiona</strong> per leggere le cartelle</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DRIVE_ID = "b!jXCRBxCdL06YL39BBN1wlOScJ7H1jVlLu1Hv0jF5DDYW8DLfVgHyRbureh-mma5y";
+
+const KNOWN_FOLDERS = [
+  { id:"015XUA6TRKEFYZFEBW3RB3Q62TV46EGUQ5", name:"2026-04 Fimotec", files:["Checklist_FimoTec_COMPILATA.xlsx"] },
+  { id:"015XUA6TTAAX32F7HJUJHYPFOQ5XHAAMRS", name:"Tecnologie Industriali & Aeronautiche SRL", files:["Checklist_Base.xlsx","Report_Azienda_2026_04_17.pdf"] },
+  { id:"015XUA6TSY4PI7UJV3EFFIFRCDXEWIXCF7", name:"2026-04-TECNOLOGIE_INDUSTRIALI__AERONAUTICHE", files:["Checklist_TIA.xlsx"] },
+];
+
+let state = [], logs = {}, batchRunning = false, batchStop = false;
+
+function inferStatus(folder) {
+  const files = folder.files || [];
+  const hasPdf = files.some(f => /^report_azienda.*\.pdf$/i.test(f));
+  const hasCompiled = files.some(f => /^checklist_(?!base|finale).*\.xlsx$/i.test(f));
+  const hasFinale = files.some(f => /^checklist_finale\.xlsx$/i.test(f));
+  const hasTxt = files.some(f => f.endsWith(".txt"));
+  const l1 = hasCompiled ? "done" : hasPdf ? "todo" : "missing";
+  const l2 = hasFinale ? "done" : (hasCompiled && hasTxt) ? "todo" : !hasCompiled ? "missing" : "missing-txt";
+  return { hasPdf, hasCompiled, hasFinale, hasTxt, l1, l2 };
+}
+
+function getPendingTasks() {
+  const tasks = [];
+  state.forEach((s,i) => { if (s.inf.l1==="todo") tasks.push({folderIdx:i,lead:1,label:`${s.name} — Lead 1`}); });
+  state.forEach((s,i) => { if (s.inf.l2==="todo") tasks.push({folderIdx:i,lead:2,label:`${s.name} — Lead 2`}); });
+  return tasks;
+}
+
+function badgeHtml(status, label) {
+  const map = {
+    done:         ["b-done",    "ti-circle-check", "✓ "+label],
+    todo:         ["b-todo",    "ti-clock",        label+" da fare"],
+    missing:      ["b-missing", "ti-alert-circle", label+" — manca input"],
+    "missing-txt":["b-missing", "ti-alert-circle", label+" — manca .txt"],
+    running:      ["b-running", "",                label+"..."],
+  };
+  const [cls,icon,text] = map[status]||["b-na","ti-minus",label+" n/d"];
+  const ic = status==="running" ? '<span class="spinner"></span>' : `<i class="ti ${icon}"></i>`;
+  return `<span class="badge ${cls}">${ic} ${text}</span>`;
+}
+
+function ck(ok, label) {
+  return `<div class="check-row"><i class="ti ${ok?"ti-circle-check ck-ok":"ti-circle-x ck-no"}"></i><span>${label}</span></div>`;
+}
+
+function initials(name) {
+  return name.split(/[\s\-_&]+/).filter(Boolean).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+}
+
+const AV = [
+  {bg:"#EEEDFE",color:"#3C3489"},{bg:"#E1F5EE",color:"#085041"},
+  {bg:"#E6F1FB",color:"#0C447C"},{bg:"#FAECE7",color:"#993C1D"},
+];
+
+function renderLeads() {
+  const grid = document.getElementById("leads-grid");
+  if (!state.length) { grid.innerHTML='<div class="empty-state"><i class="ti ti-folder-search"></i><p>Nessuna cartella trovata</p></div>'; return; }
+  let l1ok=0,l2ok=0,todo=0;
+  const html = state.map((s,i) => {
+    const av = AV[i%AV.length];
+    const {hasPdf,hasCompiled,hasFinale,hasTxt,l1,l2} = s.inf;
+    if(l1==="done") l1ok++; if(l2==="done") l2ok++; if(l1==="todo"||l2==="todo") todo++;
+    const compiledFile = s.files.find(f=>/^checklist_(?!base|finale).*\.xlsx$/i.test(f))||"—";
+    const txtFiles = s.files.filter(f=>f.endsWith(".txt"));
+    const logContent = logs[i]||"";
+    return `
+<div class="lead-card" id="card-${i}">
+  <div class="lead-header" onclick="toggleCard(${i})">
+    <div class="lead-avatar" style="background:${av.bg};color:${av.color}">${initials(s.name)}</div>
+    <div class="lead-info">
+      <div class="lead-name">${s.name}</div>
+      <div class="lead-files">${s.files.join(" · ")}</div>
+    </div>
+    <div class="badges">${badgeHtml(l1,"Lead 1")} ${badgeHtml(l2,"Lead 2")}</div>
+  </div>
+  <div class="lead-body" id="body-${i}">
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon"><i class="ti ti-building-factory-2" style="color:var(--blue)"></i></div>
+        <div class="step-content">
+          <div class="step-title">Lead 1 — Briefing azienda</div>
+          ${ck(hasPdf,"Report_Azienda_*.pdf presente")}
+          ${ck(hasCompiled,"Checklist compilata"+(hasCompiled?" — "+compiledFile:""))}
+          <div class="step-desc">${l1==="done"?"Checklist già generata — completato.":l1==="todo"?"PDF trovato, checklist non ancora generata.":"Manca il PDF aziendale."}</div>
+          <div class="step-action">
+            ${l1==="todo"?`<button class="btn btn-primary" onclick="runProcess(${i},1)"><i class="ti ti-player-play"></i> Esegui ↗</button>`:""}
+            ${l1==="done"?`<button class="btn" onclick="runProcess(${i},1)"><i class="ti ti-refresh"></i> Riesegui</button>`:""}
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon"><i class="ti ti-microphone" style="color:var(--green)"></i></div>
+        <div class="step-content">
+          <div class="step-title">Lead 2 — Qualifica con trascrizioni Plaud</div>
+          ${ck(hasCompiled,"Checklist Lead 1 presente")}
+          ${ck(hasTxt,hasTxt?"Trascrizioni Plaud: "+txtFiles.join(", "):"Nessun file .txt trovato")}
+          ${ck(hasFinale,"Checklist_Finale.xlsx presente")}
+          <div class="step-desc">${l2==="done"?"Checklist_Finale.xlsx presente — completato.":l2==="todo"?"Pronto per generare Checklist_Finale.xlsx.":l2==="missing-txt"?"Checklist presente ma mancano le trascrizioni Plaud (.txt).":"Eseguire prima Lead 1."}</div>
+          <div class="step-action">
+            ${l2==="todo"?`<button class="btn btn-primary" onclick="runProcess(${i},2)"><i class="ti ti-player-play"></i> Esegui ↗</button>`:""}
+            ${l2==="done"?`<button class="btn" onclick="runProcess(${i},2)"><i class="ti ti-refresh"></i> Riesegui</button>`:""}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="log-box ${logContent?"open":""}" id="log-${i}">${logContent}</div>
+  </div>
+</div>`;
+  }).join("");
+  grid.innerHTML = html;
+  document.getElementById("summary-bar").style.display = "grid";
+  document.getElementById("m-total").textContent = state.length;
+  document.getElementById("m-l1ok").textContent = l1ok;
+  document.getElementById("m-l2ok").textContent = l2ok;
+  document.getElementById("m-todo").textContent = todo;
+  const pending = getPendingTasks();
+  const bb = document.getElementById("batch-btn");
+  bb.style.display = pending.length && !batchRunning ? "inline-flex" : "none";
+  bb.innerHTML = `<i class="ti ti-player-play"></i> Esegui tutti i pendenti (${pending.length}) ↗`;
+}
+
+function toggleCard(i) { document.getElementById(`body-${i}`).classList.toggle("open"); }
+
+function appendLog(i, msg) {
+  const ts = new Date().toLocaleTimeString("it-IT");
+  logs[i] = (logs[i]||"")+`[${ts}] ${msg}\n`;
+  const el = document.getElementById(`log-${i}`);
+  if (el) { el.textContent = logs[i]; el.classList.add("open"); el.scrollTop = el.scrollHeight; }
+}
+
+async function callAI(s, leadNum) {
+  const pdfFile = s.files.find(f=>/^report_azienda.*\.pdf$/i.test(f))||"";
+  const checklistFile = s.files.find(f=>/^checklist_(?!base|finale).*\.xlsx$/i.test(f))||"";
+  const txtFiles = s.files.filter(f=>f.endsWith(".txt"));
+  const prompt = leadNum===1
+    ? `Esegui Lead 1 per il lead "${s.name}". File nella cartella: ${s.files.join(", ")}. PDF aziendale: ${pdfFile}. Leggi il PDF, estrai i dati aziendali e compila la Checklist_Base con il template del progetto Lead 1. Salva come Checklist_${s.name.replace(/[\s&]/g,"_")}.xlsx nella cartella del lead.`
+    : `Esegui Lead 2 per il lead "${s.name}". Checklist Lead 1: ${checklistFile}. Trascrizioni Plaud: ${txtFiles.join(", ")}. Leggi entrambi, completa la qualifica (segnali strategici, domande discovery, fit, scenari). Salva come Checklist_Finale.xlsx nella stessa cartella.`;
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model:"claude-sonnet-4-20250514",
+      max_tokens:1000,
+      system:`Sei l'assistente di automazione MadLab per la gestione lead su SharePoint.\nDrive ID: ${DRIVE_ID}\nCartella lead ID: ${s.id}\n\nLead 1 — input: Report_Azienda_*.pdf → output: Checklist_[Nome].xlsx (template interno al progetto)\nLead 2 — input: Checklist_[Nome].xlsx + *.txt → output: Checklist_Finale.xlsx\n\nRispondi in italiano con un riepilogo conciso delle azioni eseguite.`,
+      messages:[{role:"user",content:prompt}],
+      mcp_servers:[{type:"url",url:"https://microsoft365.mcp.claude.com/mcp",name:"m365"}]
+    })
+  });
+  const data = await res.json();
+  return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+}
+
+function updateStateAfter(folderIdx, leadNum) {
+  const s = state[folderIdx];
+  if (leadNum===1) {
+    s.inf.l1="done"; s.inf.hasCompiled=true;
+    if (!s.files.some(f=>/^checklist_(?!base|finale).*\.xlsx$/i.test(f)))
+      s.files.push(`Checklist_${s.name.replace(/[\s&]/g,"_")}.xlsx`);
+    if (s.inf.hasTxt) s.inf.l2="todo";
+  } else {
+    s.inf.l2="done"; s.inf.hasFinale=true;
+    if (!s.files.includes("Checklist_Finale.xlsx")) s.files.push("Checklist_Finale.xlsx");
+  }
+}
+
+async function runProcess(folderIdx, leadNum) {
+  const s = state[folderIdx];
+  const bodyEl = document.getElementById(`body-${folderIdx}`);
+  if (!bodyEl.classList.contains("open")) bodyEl.classList.add("open");
+  appendLog(folderIdx, `Avvio Lead ${leadNum} per "${s.name}"...`);
+  try {
+    const text = await callAI(s, leadNum);
+    appendLog(folderIdx, `✓ Completato:\n${text}`);
+    updateStateAfter(folderIdx, leadNum);
+    renderLeads();
+    const nb = document.getElementById(`body-${folderIdx}`);
+    if (nb && !nb.classList.contains("open")) nb.classList.add("open");
+  } catch(e) {
+    appendLog(folderIdx, `✗ Errore: ${e.message}`);
+  }
+}
+
+async function runBatch() {
+  const tasks = getPendingTasks();
+  if (!tasks.length) return;
+  batchRunning=true; batchStop=false;
+  document.getElementById("batch-btn").style.display="none";
+  document.getElementById("stop-btn").style.display="inline-flex";
+  document.getElementById("scan-btn").disabled=true;
+  const bar = document.getElementById("batch-bar");
+  bar.classList.add("visible");
+  const queueEl = document.getElementById("batch-queue");
+  const statusEl = document.getElementById("batch-status");
+  const fillEl = document.getElementById("progress-fill");
+  const queueItems = tasks.map((t,i)=>({...t,status:"pending",id:`qi-${i}`}));
+  function renderQueue() {
+    queueEl.innerHTML = queueItems.map(t=>{
+      const cls={pending:"qi-pending",running:"qi-running",done:"qi-done",error:"qi-error",skipped:"qi-skip"}[t.status];
+      const icon={pending:"ti-clock",running:"",done:"ti-circle-check",error:"ti-alert-circle",skipped:"ti-minus"}[t.status];
+      const ic=t.status==="running"?'<span class="spinner"></span>':`<i class="ti ${icon}"></i>`;
+      return `<span class="qi ${cls}">${ic} ${t.label}</span>`;
+    }).join("");
+  }
+  renderQueue();
+  let done=0;
+  for (let i=0; i<queueItems.length; i++) {
+    if (batchStop) { queueItems[i].status="skipped"; renderQueue(); continue; }
+    const task=queueItems[i];
+    task.status="running"; renderQueue();
+    statusEl.textContent=`${done} / ${tasks.length}`;
+    fillEl.style.width=`${Math.round(done/tasks.length*100)}%`;
+    document.getElementById(`card-${task.folderIdx}`)?.classList.add("active-batch");
+    const bodyEl=document.getElementById(`body-${task.folderIdx}`);
+    if (bodyEl && !bodyEl.classList.contains("open")) bodyEl.classList.add("open");
+    appendLog(task.folderIdx, `[BATCH] Avvio Lead ${task.lead}...`);
+    try {
+      const text = await callAI(state[task.folderIdx], task.lead);
+      appendLog(task.folderIdx, `✓ Completato:\n${text}`);
+      updateStateAfter(task.folderIdx, task.lead);
+      task.status="done";
+    } catch(e) {
+      appendLog(task.folderIdx, `✗ Errore: ${e.message}`);
+      task.status="error";
+    }
+    document.getElementById(`card-${task.folderIdx}`)?.classList.remove("active-batch");
+    done++;
+    statusEl.textContent=`${done} / ${tasks.length}`;
+    fillEl.style.width=`${Math.round(done/tasks.length*100)}%`;
+    renderQueue(); renderLeads();
+    if (i<queueItems.length-1) await new Promise(r=>setTimeout(r,800));
+  }
+  batchRunning=false;
+  document.getElementById("stop-btn").style.display="none";
+  document.getElementById("scan-btn").disabled=false;
+  statusEl.textContent=batchStop?`Interrotto — ${done} / ${tasks.length} completati`:`Completato — ${done} / ${tasks.length}`;
+  fillEl.style.width="100%";
+  renderLeads();
+}
+
+function stopBatch() {
+  batchStop=true;
+  document.getElementById("stop-btn").innerHTML='<i class="ti ti-player-stop"></i> Interruzione...';
+  document.getElementById("stop-btn").disabled=true;
+}
+
+async function startScan() {
+  const btn=document.getElementById("scan-btn");
+  btn.innerHTML='<span class="spinner"></span> Scansione...';
+  btn.disabled=true;
+  logs={}; batchRunning=false; batchStop=false;
+  document.getElementById("batch-bar").classList.remove("visible");
+  document.getElementById("stop-btn").style.display="none";
+  state=KNOWN_FOLDERS.map(f=>({...f,inf:inferStatus(f)}));
+  renderLeads();
+  btn.innerHTML='<i class="ti ti-refresh"></i> Scansiona';
+  btn.disabled=false;
+}
+
+startScan();
+</script>
+</body>
+</html>
